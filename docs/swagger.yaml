@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   model.CreateCustomerRequest:
     properties:
@@ -50,17 +51,52 @@ definitions:
       status:
         type: string
     type: object
+host: localhost:8080
 info:
   contact: {}
+  description: Microservice for managing and validating customer records.
+  title: Customer Registry API
+  version: "1.0"
 paths:
   /customers:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma lista paginada de todos os clientes registados no sistema.
+      parameters:
+      - default: 1
+        description: Número da página
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Limite de itens por página
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Customer'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Listar clientes
+      tags:
+      - customers
     post:
       consumes:
       - application/json
-      description: Validates and saves a new customer registration with an initial
-        ACTIVE status.
+      description: Regista um novo cliente fictício. O documento é validado e deve
+        iniciar com "FAKE-".
       parameters:
-      - description: Customer registration payload
+      - description: Dados de registo do cliente
         in: body
         name: request
         required: true
@@ -85,22 +121,52 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ErrorResponse'
-      summary: Create a new customer record
+      summary: Criar um novo cliente
+      tags:
+      - customers
+  /customers/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Recupera as informações completas de um cliente utilizando o seu
+        identificador UUID interno.
+      parameters:
+      - description: UUID do Cliente
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Customer'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Procurar cliente por ID
       tags:
       - customers
   /customers/{id}/status:
     patch:
       consumes:
       - application/json
-      description: Partially modifies a customer profile status state (ACTIVE, INACTIVE,
-        UNDER_REVIEW).
+      description: Modifica apenas o status operacional interno de um cliente específico
+        (ACTIVE, INACTIVE, UNDER_REVIEW).
       parameters:
-      - description: Customer UUID
+      - description: UUID do Cliente
         in: path
         name: id
         required: true
         type: string
-      - description: Target status payload
+      - description: Payload com o novo estado
         in: body
         name: request
         required: true
@@ -110,7 +176,7 @@ paths:
       - application/json
       responses:
         "204":
-          description: No Content
+          description: No Content - Atualização bem-sucedida
         "400":
           description: Bad Request
           schema:
@@ -123,7 +189,36 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ErrorResponse'
-      summary: Update customer status
+      summary: Atualizar estado do cliente
+      tags:
+      - customers
+  /customers/document/{document}:
+    get:
+      consumes:
+      - application/json
+      description: 'Recupera um cliente utilizando o seu documento fictício (ex: FAKE-00001).'
+      parameters:
+      - description: Documento fictício do Cliente
+        in: path
+        name: document
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Customer'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Procurar cliente por Documento
       tags:
       - customers
 swagger: "2.0"

@@ -16,8 +16,8 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/customers": {
-            "post": {
-                "description": "Validates and saves a new customer registration with an initial ACTIVE status.",
+            "get": {
+                "description": "Retorna uma lista paginada de todos os clientes registados no sistema.",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,10 +27,56 @@ const docTemplate = `{
                 "tags": [
                     "customers"
                 ],
-                "summary": "Create a new customer record",
+                "summary": "Listar clientes",
                 "parameters": [
                     {
-                        "description": "Customer registration payload",
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número da página",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Limite de itens por página",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Customer"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Regista um novo cliente fictício. O documento é validado e deve iniciar com \"FAKE-\".",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Criar um novo cliente",
+                "parameters": [
+                    {
+                        "description": "Dados de registo do cliente",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -67,9 +113,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/customers/{id}/status": {
-            "patch": {
-                "description": "Partially modifies a customer profile status state (ACTIVE, INACTIVE, UNDER_REVIEW).",
+        "/customers/document/{document}": {
+            "get": {
+                "description": "Recupera um cliente utilizando o seu documento fictício (ex: FAKE-00001).",
                 "consumes": [
                     "application/json"
                 ],
@@ -79,17 +125,105 @@ const docTemplate = `{
                 "tags": [
                     "customers"
                 ],
-                "summary": "Update customer status",
+                "summary": "Procurar cliente por Documento",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Customer UUID",
+                        "description": "Documento fictício do Cliente",
+                        "name": "document",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Customer"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/{id}": {
+            "get": {
+                "description": "Recupera as informações completas de um cliente utilizando o seu identificador UUID interno.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Procurar cliente por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID do Cliente",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Customer"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/{id}/status": {
+            "patch": {
+                "description": "Modifica apenas o status operacional interno de um cliente específico (ACTIVE, INACTIVE, UNDER_REVIEW).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Atualizar estado do cliente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID do Cliente",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Target status payload",
+                        "description": "Payload com o novo estado",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -100,7 +234,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content"
+                        "description": "No Content - Atualização bem-sucedida"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -207,12 +341,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:8080",
+	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Customer Registry API",
+	Description:      "Microservice for managing and validating customer records.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

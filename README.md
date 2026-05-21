@@ -1,30 +1,31 @@
 # Customer Registry API
 
-Uma API REST desenvolvida em Go para gerenciar registros fictícios de clientes. Desenvolvida como parte de um desafio técnico para demonstrar os fundamentos de arquitetura de software, persistência relacional e conteinerização.
+Uma API REST robusta desenvolvida em Go para gerir registos de clientes fictícios. Este projeto foi desenvolvido como resposta a um desafio técnico, enfatizando a clareza da arquitetura, validação estrita de dados e observabilidade.
 
-## 🛠 Decisões Técnicas
+## 🚀 Tecnologias e Ferramentas
 
-- **Arquitetura (Handler -> Service -> Repository)**: Esta separação garante que a lógica de negócio (Service) não conheça detalhes do HTTP (Handler) ou do Banco de Dados (Repository). Isso facilita os testes unitários.
-- **Roteamento (`go-chi/chi`)**: O Chi foi escolhido por ser 100% compatível com a biblioteca padrão `net/http` do Go, além de ser leve e performático.
-- **Banco de Dados (`pgx/v5`)**: Utilizado no lugar de ORMs pesados (como GORM) para demonstrar proficiência com SQL puro e obter máxima performance na comunicação com o PostgreSQL.
-- **Migrations (`golang-migrate`)**: As migrations são executadas via container no Docker Compose, garantindo que o banco suba sempre estruturado e pronto para uso, sem intervenção manual.
+- **Linguagem:** Go 1.22
+- **Roteamento:** `go-chi/chi`
+- **Base de Dados:** PostgreSQL 15 (`pgx/v5`)
+- **Infraestrutura:** Docker & Docker Compose
+- **Documentação API:** Swagger (OpenAPI 2.0)
+- **Observabilidade:** Logs Estruturados em JSON (`log/slog`) e APM Tracer (Datadog)
 
-## 🚀 Pré-requisitos
+## 🏗 Arquitetura
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-- Make (opcional, mas recomendado)
+O projeto adota uma arquitetura em camadas focada na clara separação de responsabilidades:
+- **Handler (Transport):** Lida com o processamento HTTP (respostas, leitura de JSON, Swagger).
+- **Service (Domain):** Encapsula as lógicas de negócio cruciais e validações (ex: scores, estados).
+- **Repository (Data):** Totalmente focado nas queries e interação transacional com o PostgreSQL.
 
-## 📦 Como executar o projeto
+## 📦 Pré-requisitos
 
-Basta rodar o comando abaixo na raiz do projeto. Ele fará o build da aplicação Go, subirá o banco PostgreSQL e executará as migrations automaticamente:
+- [Docker](https://docs.docker.com/get-docker/) e [Docker Compose](https://docs.docker.com/compose/install/) instalados na sua máquina local.
+- Make (Opcional, atalhos facilitados).
 
-```bash
-make up
-```
+## 🔧 Configuração e Execução Rápida
 
-ou:
- 
-```bash
-docker-compose up --build -d
-```
+1. **Configurar as Variáveis de Ambiente:**
+   Crie uma cópia do ficheiro `.env.example` e renomeie-a para `.env`.
+   ```bash
+   cp .env.example .env

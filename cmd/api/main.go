@@ -9,9 +9,12 @@ import (
 	"net/http"
 	"os"
 
+	_ "customer-registry-api/docs" // Swagger docs
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func main() {
@@ -48,7 +51,12 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// Healthcheck
+	// Swagger Docs
+
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
+	// httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+
+	// --- Healthcheck ---
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))

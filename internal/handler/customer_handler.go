@@ -28,6 +28,18 @@ func (h *CustomerHandler) RegisterRoutes(r chi.Router) {
 	r.Patch("/customers/{id}/status", h.UpdateStatus)
 }
 
+// Create godoc
+// @Summary      Create a new customer record
+// @Description  Validates and saves a new customer registration with an initial ACTIVE status.
+// @Tags         customers
+// @Accept       json
+// @Produce      json
+// @Param        request body model.CreateCustomerRequest true "Customer registration payload"
+// @Success      201  {object}  model.Customer
+// @Failure      400  {object}  model.ErrorResponse
+// @Failure      409  {object}  model.ErrorResponse
+// @Failure      500  {object}  model.ErrorResponse
+// @Router       /customers [post]
 func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req model.CreateCustomerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -77,6 +89,19 @@ func (h *CustomerHandler) GetByDocument(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, customer)
 }
 
+// UpdateStatus godoc
+// @Summary      Update customer status
+// @Description  Partially modifies a customer profile status state (ACTIVE, INACTIVE, UNDER_REVIEW).
+// @Tags         customers
+// @Accept       json
+// @Produce      json
+// @Param        id      path      string  true  "Customer UUID"
+// @Param        request body model.UpdateStatusRequest true "Target status payload"
+// @Success      204
+// @Failure      400  {object}  model.ErrorResponse
+// @Failure      404  {object}  model.ErrorResponse
+// @Failure      500  {object}  model.ErrorResponse
+// @Router       /customers/{id}/status [patch]
 func (h *CustomerHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var req model.UpdateStatusRequest

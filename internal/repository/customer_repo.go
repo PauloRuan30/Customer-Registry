@@ -8,6 +8,7 @@ import (
 
 	//Github imports
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -35,9 +36,13 @@ func NewPostgresCustomerRepository(db *pgxpool.Pool) CustomerRepository {
 func (r *postgresCustomerRepository) CreateCustomer(ctx context.Context, customer *model.Customer) error {
 	query := `INSERT INTO customers (id, document, name, score, risk_level, income_range, status, created_at, updated_at)
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+
 	_, err := r.db.Exec(ctx, query, customer.ID, customer.Document, customer.Name, customer.Score, customer.RiskLevel, customer.IncomeRange, customer.Status, customer.CreatedAt, customer.UpdatedAt)
 	if err != nil {
-		if err.Error() == `ERROR: duplicate key value violates unique constraint "customers_document_key" (SQLSTATE 23505)` {
+
+		var pgErr *pgconn.PgError
+
+		if errors.As(err, &pgErr) {
 			return ErrDuplicateDocument
 		}
 		return fmt.Errorf("failed to create customer: %w", err)
@@ -96,7 +101,7 @@ func (r *postgresCustomerRepository) scanCustomer(ctx context.Context, query str
 	var c model.Customer
 	err := r.db.QueryRow(ctx, query, args...).Scan(&c.ID, &c.Document, &c.Name, &c.Score, &c.RiskLevel, &c.IncomeRange, &c.Status, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) || err.Error() == "no rows in result set" {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
 		return nil, fmt.Errorf("failed to scan customer: %w", err)

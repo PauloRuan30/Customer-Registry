@@ -1,30 +1,105 @@
 # Customer Registry API
 
-Uma API REST desenvolvida em Go para gerenciar registros fictícios de clientes. Desenvolvida como parte de um desafio técnico para demonstrar os fundamentos de arquitetura de software, persistência relacional e conteinerização.
+Uma API REST robusta desenvolvida em Go para gerir registos de clientes fictícios. Este projeto foi desenvolvido como resposta a um desafio técnico, enfatizando a clareza da arquitetura, validação estrita de dados e observabilidade.
 
-## 🛠 Decisões Técnicas
+## 🚀 Tecnologias e Ferramentas
 
-- **Arquitetura (Handler -> Service -> Repository)**: Esta separação garante que a lógica de negócio (Service) não conheça detalhes do HTTP (Handler) ou do Banco de Dados (Repository). Isso facilita os testes unitários.
-- **Roteamento (`go-chi/chi`)**: O Chi foi escolhido por ser 100% compatível com a biblioteca padrão `net/http` do Go, além de ser leve e performático.
-- **Banco de Dados (`pgx/v5`)**: Utilizado no lugar de ORMs pesados (como GORM) para demonstrar proficiência com SQL puro e obter máxima performance na comunicação com o PostgreSQL.
-- **Migrations (`golang-migrate`)**: As migrations são executadas via container no Docker Compose, garantindo que o banco suba sempre estruturado e pronto para uso, sem intervenção manual.
+- **Linguagem:** Go 1.22
+- **Roteamento:** `go-chi/chi`
+- **Base de Dados:** PostgreSQL 15 (`pgx/v5`)
+- **Infraestrutura:** Docker & Docker Compose
+- **Documentação API:** Swagger (OpenAPI 2.0)
+- **Observabilidade:** Logs Estruturados em JSON (`log/slog`) e APM Tracer (Datadog)
 
-## 🚀 Pré-requisitos
+## 🏗 Arquitetura
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-- Make (opcional, mas recomendado)
+O projeto adota uma arquitetura em camadas focada na clara separação de responsabilidades:
+- **Handler (Transport):** Lida com o processamento HTTP (respostas, leitura de JSON, Swagger).
+- **Service (Domain):** Encapsula as lógicas de negócio cruciais e validações (ex: scores, estados).
+- **Repository (Data):** Totalmente focado nas queries e interação transacional com o PostgreSQL.
 
-## 📦 Como executar o projeto
+## 📦 Pré-requisitos
 
-Basta rodar o comando abaixo na raiz do projeto. Ele fará o build da aplicação Go, subirá o banco PostgreSQL e executará as migrations automaticamente:
+- [Docker](https://docs.docker.com/get-docker/) e [Docker Compose](https://docs.docker.com/compose/install/) instalados na sua máquina local.
+- Make (Opcional, atalhos facilitados).
+
+## 🔧 Configuração e Execução Rápida
+
+1. **Configurar as Variáveis de Ambiente:**
+   Crie uma cópia do ficheiro `.env.example` e renomeie-a para `.env`.
 
 ```bash
-make up
+   cp .env.example .env
 ```
 
-ou:
- 
+
+2. **Subir os Contentores da Infraestrutura:**
+   Execute o comando abaixo para compilar a aplicação Go, inicializar o PostgreSQL e executar as migrações de esquemas de forma totalmente automatizada:
+
 ```bash
-docker-compose up --build -d
+    make up
+```
+
+*Nota: Caso não tenha o utilitário `make` instalado no seu sistema, execute diretamente:*
+
+```bash
+    docker compose up --build -d
+
+```
+
+3. **Verificar o Estado dos Serviços:**
+Garanta que todos os contentores (API, Base de Dados, Migrações e Datadog Agent) subiram com sucesso:
+
+```bash
+    docker compose ps
+
+```
+
+
+4. **Interagir via Documentação (Swagger UI):**
+Com a API ativa, aceda à interface gráfica do Swagger através do seu browser para testar os endpoints em tempo real:
+
+```bash
+    http://localhost:8080/swagger/index.html
+
+```
+
+
+
+---
+
+## 🧪 Testes Automatizados
+
+O projeto conta com uma suite de testes unitários focada em garantir a robustez das regras de negócio da camada de `Service` (como validações de limites de score, formatos de documento com o prefixo obrigatório `FAKE-` e estados permitidos).
+
+Para executar os testes locais com feedback detalhado no terminal, utilize:
+
+```bash
+make test
+
+```
+
+---
+
+## 🔍 Inspeção Direta da Base de Dados
+
+Para validar que os dados enviados através dos endpoints HTTP estão a ser corretamente persistidos no disco do PostgreSQL (e não apenas retidos em memória), pode aceder diretamente ao cliente interativo `psql` dentro do contentor isolado:
+
+```bash
+docker exec -it customer_registry_db psql -U admin -d customer_registry
+
+```
+
+Exemplos de comandos úteis para demonstração:
+
+```sql
+-- Listar todos os clientes registados e os seus respetivos scores
+SELECT id, document, name, score, status FROM customers;
+
+-- Verificar o funcionamento do histórico de modificações (PATCH)
+SELECT id, status, updated_at FROM customers;
+
+-- Sair do terminal do PostgreSQL
+\q
+
 ```

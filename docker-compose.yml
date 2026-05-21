@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  db:
+    container_name: customer_registry_db
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: customer_registry
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d customer_registry"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    container_name: customer_registry_migrate
+    image: migrate/migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+    command:
+      - -path=/migrations
+      - -database=postgres://admin:password@db:5432/customer_registry?sslmode=disable
+      - up
+
+  api:
+    container_name: customer_registry_api
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://admin:password@db:5432/customer_registry?sslmode=disable
+      - PORT=8080
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

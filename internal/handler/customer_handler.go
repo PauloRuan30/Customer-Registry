@@ -2,11 +2,12 @@ package handler
 
 import (
 	"customer-registry-api/internal/model"
+	"customer-registry-api/internal/repository"
 	"customer-registry-api/internal/service"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -109,12 +110,21 @@ func writeError(w http.ResponseWriter, status int, msg, details string) {
 // handleServiceError translates domain errors into HTTP status codes
 func handleServiceError(w http.ResponseWriter, err error) {
 	switch {
-	case strings.Contains(err.Error(), "not found"):
-		writeError(w, http.StatusNotFound, "Resource not found", err.Error())
-	case strings.Contains(err.Error(), "already registered") || strings.Contains(err.Error(), "duplicate"):
-		writeError(w, http.StatusConflict, "Conflict", err.Error())
-	case strings.Contains(err.Error(), "must be") || strings.Contains(err.Error(), "required"):
+	// 1. Check for specific sentinel errors first using errors.Is
+	case errors.Is(err, repository.ErrNotFound):
+		writeError(w, http.StatusNotFound, "Resource not found", "The requested customer does not exist")
+	case errors.Is(err, repository.ErrDuplicateDocument):
+		writeError(w, http.StatusConflict, "Conflict", "This document is already registered")
+
+	// 2. Check for service validation errors
+	case errors.Is(err, service.ErrInvalidDocument),
+		errors.Is(err, service.ErrInvalidScore),
+		errors.Is(err, service.ErrInvalidRisk),
+		errors.Is(err, service.ErrInvalidStatus),
+		errors.Is(err, service.ErrNameRequired):
 		writeError(w, http.StatusBadRequest, "Validation failed", err.Error())
+
+	// 3. Fallback for unexpected failures (database down, etc.)
 	default:
 		writeError(w, http.StatusInternalServerError, "Internal server error", err.Error())
 	}
